@@ -1,0 +1,27 @@
+<!doctype html>
+<html>
+<head>
+<title>p value | normal</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.0/d3.min.js" integrity="sha512-jXsLjbg/Pr8F5U2evjFaEci7mImlUix865lbvnNmp5TzS86+VTTFVDz7FFTS6VHdhSn7UJ4tjZdvpp0GgT0fZA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<style>
+    .line {
+        fill: none;
+        stroke: steelblue;
+        stroke-width: 2px;
+    }
+</style>
+</head>
+<body>
+    <h3>
+        p value visualization on normal curve
+    </h3>
+    <div id="my_dataviz"></div>
+    <div class="slidecontainer">
+        <input type="range" min="-10" max="10" value="0" class="slider" id="myRange">
+    </div>
+    <div>
+        Chart replicated from: https://github.com/OpenSourceEcon/DeficitParty/blob/main/images/tdist.html
+    </div>
+    <script src="js/scripts.js"></script>
+</body>
+</html>
