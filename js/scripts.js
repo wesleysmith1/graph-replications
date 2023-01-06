@@ -4,6 +4,8 @@ height = 400 - margin.top - margin.bottom;
 
 let normalData = [], mean = 0, sigma = 1
 
+let Z = 0
+
 //taken from Jason Davies science library
 // https://github.com/jasondavies/science.js/blob/master/src/stats/distribution/gaussian.js
 function gaussian_pdf(x, mean, sigma) {
@@ -23,14 +25,14 @@ var svg = d3.select("#my_dataviz")
           "translate(" + margin.left + "," + margin.top + ")");
 
 var x = d3.scaleLinear()
-  .domain([-10,10])
+  .domain([-5,5])
   .range([0, width])
 
 var y = d3.scaleLinear()
   .domain(d3.extent([0, .45]))
   .range([ height, 0 ]);
 
-for (let i = x(0); i < x(10); i++) {
+for (let i = x(Z); i < x(5); i++) {
   q = x.invert(i)
   data.push({x: q, y: gaussian_pdf(q, mean, sigma)})
 }
@@ -45,16 +47,16 @@ svg.append("path")
   .attr("d", Gen(data))
   .attr("fill", "green")
   .attr("stroke", "black")
-  .attr("stroke-dasharray", "5,5")
+  .attr("stroke-width", "0px")
 
 // generate data for normal curve
-for (let i = 0; i < width; i++) {
+for (let i = 0; i <= width; i++) {
   q = x.invert(i)
   normalData.push({x: q, y: gaussian_pdf(q, mean, sigma)})
 }
 
-// generate line
-var line = d3.line()
+// generate normal curve line
+var normalLine = d3.line()
   .x(function(d) {
     return x(d.x);
   })
@@ -65,7 +67,20 @@ var line = d3.line()
 svg.append("path")
   .datum(normalData)
   .attr("class", "line")
-  .attr("d", line);
+  .attr("d", normalLine);
+
+// boundary line
+var dashedGen = d3.line();
+var points = [
+  [x(Z), y(Z)],
+  [x(Z), y(gaussian_pdf(Z, mean, sigma))]
+];
+
+var pathOfLine = dashedGen(points);
+
+svg.append("path")
+  .attr('d', pathOfLine)
+  .attr("class", "dashedLine")
 
 svg.append("g")
   .attr("transform", "translate(0," + height + ")")
