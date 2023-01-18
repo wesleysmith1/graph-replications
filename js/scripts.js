@@ -1,4 +1,4 @@
-var margin = {top: 10, right: 30, bottom: 35, left: 60},
+var margin = {top: 10, right: 30, bottom: 60, left: 60},
 width = 960 - margin.left - margin.right,
 height = 400 - margin.top - margin.bottom;
 
@@ -25,7 +25,7 @@ var svg = d3.select("#my_dataviz")
           "translate(" + margin.left + "," + margin.top + ")");
 
 var x = d3.scaleLinear()
-  .domain([-5,5])
+  .domain([-4,4])
   .range([0, width])
 
 var y = d3.scaleLinear()
@@ -48,6 +48,7 @@ svg.append("path")
   .attr("fill", "green")
   .attr("stroke", "black")
   .attr("stroke-width", "0px")
+  .attr("class", "area")
 
 // generate data for normal curve
 for (let i = 0; i <= width; i++) {
@@ -80,16 +81,69 @@ var pathOfLine = dashedGen(points);
 
 svg.append("path")
   .attr('d', pathOfLine)
-  .attr("class", "dashedLine")
+  .attr("class", "dashed")
 
+// draw axis
 svg.append("g")
   .attr("transform", "translate(0," + height + ")")
   .attr("class", "xaxis")
   .call(d3.axisBottom(x).tickFormat(x => x));
+
+svg.append("text")
+  .attr("class", "y label")
+  .attr("text-anchor", "end")
+  .attr("y", 365)
+  .attr("x", 500)
+  .text("Z-score");
   
 svg.append("g")
   .call(d3.axisLeft(y));
 
+svg.append("text")
+  .attr("class", "y label")
+  .attr("text-anchor", "end")
+  .attr("y", -40)
+  .attr("x", -110 )
+  .attr("transform", "rotate(-90)")
+  .text("Probability Density");
+
+function drawPVal() {
+
+  data = []
+
+  for (let i = x(Z); i < x(5); i++) {
+    q = x.invert(i)
+    data.push({x: q, y: gaussian_pdf(q, mean, sigma)})
+  }
+
+  // draw area
+  Gen = d3.area()
+    .x((p) => x(p.x))
+    .y0((p) => y(0))
+    .y1((p) => y(p.y));
+
+  svg.selectAll("path.area")
+    .attr("d", Gen(data))
+    .attr("fill", "green")
+    .attr("stroke", "black")
+    .attr("stroke-width", "0px")
+
+  // draw dashed boundary
+  dashedGen = d3.line();
+  points = [
+    [x(Z), y(0)],
+    [x(Z), y(gaussian_pdf(Z, mean, sigma))]
+  ];
+
+  console.log(points)
+
+  pathOfLine = dashedGen(points);
+
+  svg.selectAll("path.dashed")
+    .attr('d', pathOfLine)
+}
+
 document.getElementById("myRange").addEventListener("input", function() {
-  console.log(this.value)
+  Z = this.value
+  drawPVal()
 });

@@ -9,7 +9,7 @@
         stroke: steelblue;
         stroke-width: 2px;
     }
-    .dashedLine {
+    .dashed {
         fill: none;
         stroke: black;
         stroke-width: 1px;
@@ -20,11 +20,11 @@
 </head>
 <body>
     <h3>
-        p value visualization on normal curve
+        p value visualization on standard normal curve
     </h3>
     <div id="my_dataviz"></div>
     <div class="slidecontainer">
-        <input type="range" min="-10" max="10" value="0" class="slider" id="myRange">
+        <input type="range" min="0" max="4" value="0" step=.1 class="slider" id="myRange">
     </div>
     <div>
         Chart replicated from: https://github.com/OpenSourceEcon/DeficitParty/blob/main/images/tdist.html
