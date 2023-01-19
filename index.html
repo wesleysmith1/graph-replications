@@ -15,6 +15,9 @@
         stroke-width: 1px;
         stroke-dasharray: 5,5
     }
+    .probability {
+        font-size: 30px;
+    }
 
 </style>
 </head>
@@ -24,8 +27,9 @@
     </h3>
     <div id="my_dataviz"></div>
     <div class="slidecontainer">
-        <input type="range" min="0" max="4" value="0" step=.1 class="slider" id="myRange">
+        <input type="range" min="0" max="3.4" value="0" step=.1 class="slider" id="myRange">
     </div>
+    <div>Z-Score: <span id="zscore">0</span></div>
     <div>
         Chart replicated from: https://github.com/OpenSourceEcon/DeficitParty/blob/main/images/tdist.html
     </div>

@@ -107,7 +107,14 @@ svg.append("text")
   .attr("transform", "rotate(-90)")
   .text("Probability Density");
 
-function drawPVal() {
+// draw pvalue text label
+svg.append("text")
+  .attr("class", "probability")
+  .attr("y", y(gaussian_pdf(Z, mean, sigma)) - 10)
+  .attr("x", x(Z))
+  .text("50%");
+
+function drawPVal(prob) {
 
   data = []
 
@@ -128,6 +135,11 @@ function drawPVal() {
     .attr("stroke", "black")
     .attr("stroke-width", "0px")
 
+  svg.selectAll("text.probability")
+    .attr("y", y(gaussian_pdf(Z, mean, sigma)) - 10)
+    .attr("x", x(Z))
+    .text((100 - prob).toFixed(2) + "%");
+
   // draw dashed boundary
   dashedGen = d3.line();
   points = [
@@ -143,7 +155,47 @@ function drawPVal() {
     .attr('d', pathOfLine)
 }
 
+var probabilities = {
+  "0.0": 50,
+  "0.1": 53.98,
+  "0.2": 57.93,
+  "0.3": 61.79,
+  "0.4": 65.54,
+  "0.5": 69.15,
+  "0.6": 72.57,
+  "0.7": 75.8,
+  "0.8": 78.81,
+  "0.9": 81.59,
+  "1.0": 84.13,
+  "1.1": 86.43,
+  "1.2": 88.49,
+  "1.3": 90.32,
+  "1.4": 91.92,
+  "1.5": 93.32,
+  "1.6": 94.52,
+  "1.7": 95.54,
+  "1.8": 96.41,
+  "1.9": 97.13,
+  "2.0": 97.72,
+  "2.1": 98.21,
+  "2.2": 98.61,
+  "2.3": 98.93,
+  "2.4": 99.18,
+  "2.5": 99.38,
+  "2.6": 99.53,
+  "2.7": 99.65,
+  "2.8": 99.74,
+  "2.9": 99.81,
+  "3.0": 99.87,
+  "3.1": 99.9,
+  "3.2": 99.93,
+  "3.3": 99.95,
+  "3.4": 99.97,
+}
+
 document.getElementById("myRange").addEventListener("input", function() {
   Z = this.value
-  drawPVal()
+  let prob = probabilities[String(parseFloat(Z).toFixed(1))]
+  document.getElementById("zscore").innerHTML = this.value
+  drawPVal(prob)
 });
