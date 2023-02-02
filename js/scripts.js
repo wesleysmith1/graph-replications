@@ -2,19 +2,53 @@ var margin = {top: 10, right: 30, bottom: 60, left: 60},
 width = 960 - margin.left - margin.right,
 height = 400 - margin.top - margin.bottom;
 
-let normalData = [], mean = 0, sigma = 1
-
-let Z = 0
+let normalData = [], data = [], mean = 0, sd = 1, x = 0, xRange = null;
 
 //taken from Jason Davies science library
 // https://github.com/jasondavies/science.js/blob/master/src/stats/distribution/gaussian.js
-function gaussian_pdf(x, mean, sigma) {
-  var gaussianConstant = 1 / Math.sqrt(2 * Math.PI),
-    x = (x - mean) / sigma;
-    return gaussianConstant * Math.exp(-.5 * x * x) / sigma;
+function gaussian_pdf(x, mean, sd) {
+  var gaussianConstant = 1 / Math.sqrt(2 * Math.PI)
+    x = (x - mean) / sd;
+    return gaussianConstant * Math.exp(-.5 * x * x) / sd;
 };
 
-let data = []
+// ========https://stackoverflow.com/questions/14846767/std-normal-cdf-normal-cdf-or-error-function=======
+function cdf(x, mean, variance) {
+  return 0.5 * (1 + erf((x - mean) / (Math.sqrt(2 * variance))));
+}
+
+function erf(x) {
+  // save the sign of x
+  var sign = (x >= 0) ? 1 : -1;
+  x = Math.abs(x);
+
+  // constants
+  var a1 =  0.254829592;
+  var a2 = -0.284496736;
+  var a3 =  1.421413741;
+  var a4 = -1.453152027;
+  var a5 =  1.061405429;
+  var p  =  0.3275911;
+
+  // A&S formula 7.1.26
+  var t = 1.0/(1.0 + p*x);
+  var y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-x * x);
+  return sign * y; // erf(-x) = -erf(x);
+}
+// =========================================================================================================
+
+function calculateXRange() {
+  // calculate a good range so that the entire curve is displayed.
+  let output = 1
+  let range = parseInt(mean)
+  while (gaussian_pdf(mean+range, mean, sd) > .0001) {
+    range += 1
+  }
+  console.log('range:', range)
+  console.log('mean:', mean)
+  console.log([ mean - range, mean + range ])
+  return [ mean - range, mean + range ]
+}
 
 var svg = d3.select("#my_dataviz")
   .append("svg")
@@ -24,27 +58,28 @@ var svg = d3.select("#my_dataviz")
     .attr("transform",
           "translate(" + margin.left + "," + margin.top + ")");
 
-var x = d3.scaleLinear()
-  .domain([-4,4])
+xRange = calculateXRange()
+var xScale = d3.scaleLinear()
+  .domain(xRange)
   .range([0, width])
 
-var y = d3.scaleLinear()
+var yScale = d3.scaleLinear()
   .domain(d3.extent([0, .45]))
   .range([ height, 0 ]);
 
-for (let i = x(Z); i < x(5); i++) {
-  q = x.invert(i)
-  data.push({x: q, y: gaussian_pdf(q, mean, sigma)})
+for (let i = xRange[0]; i <= xScale(x); i++) {
+  q = xScale.invert(i)
+  data.push({x: q, y: gaussian_pdf(q, mean, sd)})
 }
   
 // generate area of p value
-var Gen = d3.area()
-  .x((p) => x(p.x))
-  .y0((p) => y(0))
-  .y1((p) => y(p.y));
+var pvalGen = d3.area()
+  .x((p) => xScale(p.x))
+  .y0((p) => yScale(0))
+  .y1((p) => yScale(p.y));
 
 svg.append("path")
-  .attr("d", Gen(data))
+  .attr("d", pvalGen(data))
   .attr("fill", "green")
   .attr("stroke", "black")
   .attr("stroke-width", "0px")
@@ -52,29 +87,29 @@ svg.append("path")
 
 // generate data for normal curve
 for (let i = 0; i <= width; i++) {
-  q = x.invert(i)
-  normalData.push({x: q, y: gaussian_pdf(q, mean, sigma)})
+  q = xScale.invert(i)
+  normalData.push({x: q, y: gaussian_pdf(q, mean, sd)})
 }
 
 // generate normal curve line
 var normalLine = d3.line()
   .x(function(d) {
-    return x(d.x);
+    return xScale(d.x);
   })
   .y(function(d) {
-    return y(d.y);
+    return yScale(d.y);
   });
 
 svg.append("path")
   .datum(normalData)
-  .attr("class", "line")
+  .attr("class", "line normalPDF")
   .attr("d", normalLine);
 
 // boundary line
 var dashedGen = d3.line();
 var points = [
-  [x(Z), y(Z)],
-  [x(Z), y(gaussian_pdf(Z, mean, sigma))]
+  [xScale(x), yScale(x)],
+  [xScale(x), yScale(gaussian_pdf(x, mean, sd))]
 ];
 
 var pathOfLine = dashedGen(points);
@@ -84,20 +119,13 @@ svg.append("path")
   .attr("class", "dashed")
 
 // draw axis
-svg.append("g")
+let xAxis = svg.append("g")
   .attr("transform", "translate(0," + height + ")")
   .attr("class", "xaxis")
-  .call(d3.axisBottom(x).tickFormat(x => x));
-
-svg.append("text")
-  .attr("class", "y label")
-  .attr("text-anchor", "end")
-  .attr("y", 365)
-  .attr("x", 500)
-  .text("Z-score");
+  .call(d3.axisBottom(xScale).tickFormat(x => x));
   
 svg.append("g")
-  .call(d3.axisLeft(y));
+  .call(d3.axisLeft(yScale));
 
 svg.append("text")
   .attr("class", "y label")
@@ -110,24 +138,24 @@ svg.append("text")
 // draw pvalue text label
 svg.append("text")
   .attr("class", "probability")
-  .attr("y", y(gaussian_pdf(Z, mean, sigma)) - 10)
-  .attr("x", x(Z))
+  .attr("y", yScale(gaussian_pdf(x, mean, sd)) - 10)
+  .attr("x", xScale(x))
   .text("50%");
 
 function drawPVal(prob) {
 
   data = []
 
-  for (let i = x(Z); i < x(5); i++) {
-    q = x.invert(i)
-    data.push({x: q, y: gaussian_pdf(q, mean, sigma)})
+  for (let i = xScale(xRange[0]); i <= xScale(x); i++) {
+    q = xScale.invert(i)
+    data.push({x: q, y: gaussian_pdf(q, mean, sd)})
   }
 
   // draw area
   Gen = d3.area()
-    .x((p) => x(p.x))
-    .y0((p) => y(0))
-    .y1((p) => y(p.y));
+    .x((p) => xScale(p.x))
+    .y0((p) => yScale(0))
+    .y1((p) => yScale(p.y));
 
   svg.selectAll("path.area")
     .attr("d", Gen(data))
@@ -136,23 +164,50 @@ function drawPVal(prob) {
     .attr("stroke-width", "0px")
 
   svg.selectAll("text.probability")
-    .attr("y", y(gaussian_pdf(Z, mean, sigma)) - 10)
-    .attr("x", x(Z))
-    .text((100 - prob).toFixed(2) + "%");
+    .attr("y", yScale(gaussian_pdf(x, mean, sd)) - 10)
+    .attr("x", xScale(x))
+    .text((100 * prob).toFixed(2) + "%");
 
   // draw dashed boundary
   dashedGen = d3.line();
   points = [
-    [x(Z), y(0)],
-    [x(Z), y(gaussian_pdf(Z, mean, sigma))]
+    [xScale(x), yScale(0)],
+    [xScale(x), yScale(gaussian_pdf(x, mean, sd))]
   ];
-
-  console.log(points)
 
   pathOfLine = dashedGen(points);
 
   svg.selectAll("path.dashed")
     .attr('d', pathOfLine)
+}
+
+function drawCurve() {
+
+  // Update X axis
+  xRange = calculateXRange()
+  xScale.domain(xRange)
+  xAxis.transition().duration(1000).call(d3.axisBottom(xScale))
+
+  let curveData = []
+  // generate data for normal curve
+  for (let i = 0; i <= width; i++) {
+    q = xScale.invert(i)
+    curveData.push({x: q, y: gaussian_pdf(q, mean, sd)})
+  }
+
+  // generate normal curve line
+  normalLine = d3.line()
+    .x(function(d) {
+      return xScale(d.x);
+    })
+    .y(function(d) {
+      return yScale(d.y);
+    });
+
+  svg.selectAll("path.normalPDF")
+    .datum(curveData)
+    // .attr("class", "line")
+    .attr("d", normalLine);
 }
 
 var probabilities = {
@@ -193,9 +248,31 @@ var probabilities = {
   "3.4": 99.97,
 }
 
-document.getElementById("myRange").addEventListener("input", function() {
-  Z = this.value
-  let prob = probabilities[String(parseFloat(Z).toFixed(1))]
-  document.getElementById("zscore").innerHTML = this.value
+// mean range
+document.getElementById("meanRange").addEventListener("input", function() {
+  mean = parseFloat(this.value)
+  let prob = cdf(x, mean, sd)
+  document.getElementById("mean").innerHTML = mean
+  drawCurve()
+  drawPVal(prob)
+});
+
+// standard deviation
+document.getElementById("sdRange").addEventListener("input", function() {
+  sd = this.value
+  document.getElementById("standardDeviation").innerHTML = this.value
+  // redraw curve
+  drawCurve()
+  let prob = cdf(x, mean, sd)
+  drawPVal(prob)
+});
+
+// x value
+document.getElementById("xRange").addEventListener("input", function() {
+  x = this.value
+  document.getElementById("x").innerHTML = this.value
+  // redraw curve
+  drawCurve()
+  let prob = cdf(x, mean, sd)
   drawPVal(prob)
 });

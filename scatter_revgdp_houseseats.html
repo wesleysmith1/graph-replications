@@ -15,13 +15,6 @@
         stroke-width: 1px;
         stroke-dasharray: 5,5
     }
-    .probability {
-        font-size: 30px;
-    }
-
-    .row {
-        display: flex;
-    }
 
 </style>
 </head>
@@ -30,23 +23,8 @@
         p value visualization on normal curve
     </h3>
     <div id="my_dataviz"></div>
-    <div class="row">
-        <div class="slidecontainer">
-            <input type="range" min="-5" max="4" value="0" step=.1 class="slider" id="xRange">
-        </div>
-        <div>X: <span id="x">0</span></div>
-    </div>
-    <div class="row">
-        <div class="slidecontainer">
-            <input type="range" min="-5" max="5" value="0" step=1 class="slider" id="meanRange">
-        </div>
-        <div>Mean: <span id="mean">0</span></div>
-    </div>
-    <div class="row">
-        <div class="slidecontainer">
-            <input type="range" min="1" max="5" value="1" step=.1 class="slider" id="sdRange">
-        </div>
-        <div>Standard Deviation: <span id="standardDeviation">1</span></div>
+    <div class="slidecontainer">
+        <input type="range" min="0" max="4" value="0" step=.1 class="slider" id="myRange">
     </div>
     <div>
         Chart replicated from: https://github.com/OpenSourceEcon/DeficitParty/blob/main/images/tdist.html
